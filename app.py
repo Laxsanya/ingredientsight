@@ -232,223 +232,162 @@ if page == "Home":
                 st.markdown(f"## 🍽️ {item.title()}")
 
                 with st.spinner("Searching Database..."):
+    try:
+        url = "https://world.openfoodfacts.org/cgi/search.pl"
 
-                    try:
+        params = {
+            "search_terms": item,
+            "search_simple": 1,
+            "action": "process",
+            "json": 1,
+            "page_size": 1
+        }
 
-                        url = "https://world.openfoodfacts.org/cgi/search.pl"
+        response = requests.get(url, params=params, timeout=15)
 
-                        params = {
+        if response.status_code != 200:
+            st.error(f"API Error: {response.status_code}")
+            continue
 
-                            "search_terms": item,
+        data = response.json()
 
-                            "search_simple": 1,
+        if not data or "products" not in data or len(data["products"]) == 0:
+            st.warning(f"No information found for '{item}'.")
+            continue
 
-                            "action": "process",
+        product = data["products"][0]
 
-                            "json": 1,
+        nutriments = product.get("nutriments", {})
 
-                            "page_size": 1
+        calories = nutriments.get(
+            "energy-kcal_100g",
+            nutriments.get("energy-kcal", "N/A")
+        )
 
-                        }
+        protein = nutriments.get("proteins_100g", "N/A")
+        fat = nutriments.get("fat_100g", "N/A")
+        carbs = nutriments.get("carbohydrates_100g", "N/A")
+        sugar = nutriments.get("sugars_100g", "N/A")
+        salt = nutriments.get("salt_100g", "N/A")
+        fiber = nutriments.get("fiber_100g", "N/A")
 
-                        response = requests.get(
+        category = product.get("categories", "Unknown")
 
-                            url,
+        score = 100
 
-                            params=params,
+        try:
+            if sugar != "N/A":
+                score -= float(sugar) * 1.5
+        except:
+            pass
 
-                            timeout=10
+        try:
+            if fat != "N/A":
+                score -= float(fat) * 0.8
+        except:
+            pass
 
-                        )
+        try:
+            if salt != "N/A":
+                score -= float(salt) * 15
+        except:
+            pass
 
-                        data = response.json()
-                        if data.get("products"):
+        score = max(0, min(100, int(score)))
 
-                            product = data["products"][0]
+        if score >= 85:
+            color = "🟢"
+            status = "Excellent"
+        elif score >= 70:
+            color = "🟢"
+            status = "Healthy"
+        elif score >= 55:
+            color = "🟡"
+            status = "Moderate"
+        elif score >= 40:
+            color = "🟠"
+            status = "Poor"
+        else:
+            color = "🔴"
+            status = "Avoid Frequent Consumption"
 
-                            nutriments = product.get("nutriments", {})
-
-                            calories = nutriments.get(
-                                "energy-kcal_100g",
-                                nutriments.get("energy-kcal", "N/A")
-                            )
-
-                            protein = nutriments.get(
-                                "proteins_100g",
-                                "N/A"
-                            )
-
-                            fat = nutriments.get(
-                                "fat_100g",
-                                "N/A"
-                            )
-
-                            carbs = nutriments.get(
-                                "carbohydrates_100g",
-                                "N/A"
-                            )
-
-                            sugar = nutriments.get(
-                                "sugars_100g",
-                                "N/A"
-                            )
-
-                            salt = nutriments.get(
-                                "salt_100g",
-                                "N/A"
-                            )
-
-                            fiber = nutriments.get(
-                                "fiber_100g",
-                                "N/A"
-                            )
-
-                            category = product.get(
-                                "categories",
-                                "Unknown"
-                            )
-
-                            score = 100
-
-                            try:
-                                if sugar != "N/A":
-                                    score -= float(sugar) * 1.5
-                            except:
-                                pass
-
-                            try:
-                                if fat != "N/A":
-                                    score -= float(fat) * 0.8
-                            except:
-                                pass
-
-                            try:
-                                if salt != "N/A":
-                                    score -= float(salt) * 15
-                            except:
-                                pass
-
-                            score = max(0, min(100, int(score)))
-
-                            if score >= 85:
-                                color = "🟢"
-                                status = "Excellent"
-
-                            elif score >= 70:
-                                color = "🟢"
-                                status = "Healthy"
-
-                            elif score >= 55:
-                                color = "🟡"
-                                status = "Moderate"
-
-                            elif score >= 40:
-                                color = "🟠"
-                                status = "Poor"
-
-                            else:
-                                color = "🔴"
-                                status = "Avoid Frequent Consumption"
-
-                            st.markdown(
-                                f"""
+        st.markdown(
+            f"""
 <div class="card">
 
 <h2>{item.title()}</h2>
 
 <b>Category:</b> {category}<br><br>
 
-<b>{color} Health Score:</b> {score}/100
-({status})
+<b>{color} Health Score:</b> {score}/100 ({status})
 
 </div>
 """,
-                                unsafe_allow_html=True
-                            )
+            unsafe_allow_html=True
+        )
 
-                            c1, c2 = st.columns(2)
+        c1, c2 = st.columns(2)
 
-                            with c1:
-                                st.metric("🔥 Calories", calories)
-                                st.metric("🥩 Protein (g)", protein)
-                                st.metric("🍞 Carbs (g)", carbs)
+        with c1:
+            st.metric("🔥 Calories", calories)
+            st.metric("🥩 Protein (g)", protein)
+            st.metric("🍞 Carbs (g)", carbs)
 
-                            with c2:
-                                st.metric("🧈 Fat (g)", fat)
-                                st.metric("🍬 Sugar (g)", sugar)
-                                st.metric("🧂 Salt (g)", salt)
+        with c2:
+            st.metric("🧈 Fat (g)", fat)
+            st.metric("🍬 Sugar (g)", sugar)
+            st.metric("🧂 Salt (g)", salt)
 
-                            st.subheader("Nutrition Progress")
+        st.subheader("Nutrition Progress")
 
-                            try:
-                                st.progress(min(float(protein)/50,1.0))
-                                st.caption("Protein")
+        try:
+            st.progress(min(float(protein)/50, 1.0))
+            st.caption("Protein")
+        except:
+            pass
 
-                            except:
-                                pass
+        try:
+            st.progress(min(float(fiber)/30, 1.0))
+            st.caption("Fiber")
+        except:
+            pass
 
-                            try:
-                                st.progress(min(float(fiber)/30,1.0))
-                                st.caption("Fiber")
+        try:
+            st.progress(min(float(sugar)/50, 1.0))
+            st.caption("Sugar")
+        except:
+            pass
 
-                            except:
-                                pass
+        st.subheader("💡 AI Health Advice")
 
-                            try:
-                                st.progress(min(float(sugar)/50,1.0))
-                                st.caption("Sugar")
+        advice = []
 
-                            except:
-                                pass
+        try:
+            if float(sugar) > 15:
+                advice.append("🍬 High sugar. Consume in moderation.")
+        except:
+            pass
 
-                            st.subheader("💡 AI Health Advice")
+        try:
+            if float(fat) > 20:
+                advice.append("🧈 High fat content.")
+        except:
+            pass
 
-                            advice = []
+        try:
+            if float(salt) > 1.5:
+                advice.append("🧂 High sodium.")
+        except:
+            pass
 
-                            try:
-                                if float(sugar) > 15:
-                                    advice.append(
-                                        "🍬 High sugar. Consume in moderation."
-                                    )
-                            except:
-                                pass
+        if len(advice) == 0:
+            advice.append("🥗 Looks like a balanced choice.")
 
-                            try:
-                                if float(fat) > 20:
-                                    advice.append(
-                                        "🧈 High fat content."
-                                    )
-                            except:
-                                pass
+        for tip in advice:
+            st.info(tip)
 
-                            try:
-                                if float(salt) > 1.5:
-                                    advice.append(
-                                        "🧂 High sodium."
-                                    )
-                            except:
-                                pass
-
-                            if len(advice) == 0:
-                                advice.append(
-                                    "🥗 Looks like a balanced choice."
-                                )
-
-                            for tip in advice:
-                                st.info(tip)
-
-                        else:
-
-                            st.warning(
-                                f"No information found for '{item}'."
-                            )
-
-                    except Exception:
-
-                        st.error(
-                            "Unable to connect to the food database."
-                        )
-                        # -----------------------------
+    except Exception:
+        st.error("Unable to connect to the food database.")
 # HISTORY PAGE
 # -----------------------------
 
