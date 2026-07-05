@@ -243,7 +243,16 @@ if page == "Home":
                             "page_size": 1
                         }
                 
-                        response = requests.get(url, params=params, timeout=15)
+                        headers = {
+                            "User-Agent": "Mozilla/5.0"
+                        }
+                        
+                        response = requests.get(
+                            url,
+                            params=params,
+                            headers=headers,
+                            timeout=15
+                        )
                 
                         if response.status_code != 200:
                             st.error(f"API Error: {response.status_code}")
