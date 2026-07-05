@@ -262,7 +262,7 @@ if page == "Home":
                         )
 
                         data = response.json()
-                                                if data.get("products"):
+                        if data.get("products"):
 
                             product = data["products"][0]
 
