@@ -1,5 +1,5 @@
 ## 🥗 Ingredient Insight – AI-Powered Food Ingredient Analyzer
-
+https://ingredientsight-1.onrender.com/
 **Description**
 
 Ingredient Insight is an AI-powered web application that helps users make informed dietary decisions by analyzing food products from images or manual input. The application uses Optical Character Recognition (OCR) to extract text from food labels and integrates with the OpenFoodFacts database to retrieve nutritional information, ingredient details, and product categories. It then generates a health score and personalized dietary recommendations based on the nutritional composition.
